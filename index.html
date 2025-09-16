@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Anomai Intent</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0c0d;--card:#121213;--muted:#9aa0a6;--accent:#0b77ff;--danger:#ff3b3b}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#0b0c0d,#0f0f10);color:#eef2f7;min-height:100vh;display:flex;flex-direction:column}
+.header{display:flex;align-items:center;justify-content:space-between;padding:18px 26px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.03)}
+.brand{display:flex;align-items:center;gap:14px}
+.brand img{height:40px;width:40px;object-fit:cover;border-radius:8px}
+.brand h1{font-size:20px;margin:0;font-weight:700}
+.connect{background:var(--danger);color:#fff;border:none;padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+.container{max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--card);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.6);min-height:110px;display:flex;flex-direction:column;justify-content:flex-start;gap:8px}
+.card h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.row{display:flex;gap:8px}
+select,input,button{border-radius:8px;border:none;padding:8px;background:#0f1011;color:#eef2f7;font-size:13px}
+select{min-width:0}
+.small{font-size:12px;color:var(--muted)}
+.address{background:#0e0f10;padding:8px;border-radius:8px;font-family:monospace;font-size:13px}
+.txlog{background:#0d0d0e;padding:8px;border-radius:8px;height:160px;overflow:auto;font-size:13px;color:#dfe7ee}
+.footer{margin-top:auto;padding:18px;text-align:center;color:#9aa0a6;font-size:13px}
+@media(max-width:980px){.container{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.container{grid-template-columns:1fr;padding:12px}.brand h1{font-size:18px}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand"><img src="logo.png" alt="logo"><h1>Anomai Intent</h1></div>
+  <button id="connectBtn" class="connect" onclick="connectWallet()">Connect</button>
+</header>
+
+<main class="container" id="mainApp">
+  <section class="card">
+    <h3>🔄 Swap</h3>
+    <div class="row">
+      <select id="swapFrom"></select>
+      <select id="swapTo"></select>
+    </div>
+    <input id="swapAmt" type="number" placeholder="Amount" />
+    <button style="margin-top:auto;background:var(--accent);color:#fff" onclick="doSwap()">Swap</button>
+  </section>
+
+  <section class="card">
+    <h3>🌉 Bridge</h3>
+    <div class="row">
+      <select id="bridgeFrom"></select>
+      <select id="bridgeTo"></select>
+    </div>
+    <input id="bridgeAmt" type="number" placeholder="Amount" />
+    <button style="margin-top:auto;background:var(--accent);color:#fff" onclick="doBridge()">Bridge</button>
+  </section>
+
+  <section class="card">
+    <h3>📤 Send</h3>
+    <select id="sendToken"></select>
+    <input id="sendTo" placeholder="Recipient address" />
+    <input id="sendAmt" type="number" placeholder="Amount" />
+    <button style="margin-top:auto;background:#20a8a0;color:#fff" onclick="doSend()">Send</button>
+  </section>
+
+  <section class="card">
+    <h3>📥 Receive</h3>
+    <select id="recvToken"></select>
+    <div id="recvAddr" class="address small">No token selected</div>
+    <button onclick="copyAddress()" style="margin-top:auto;background:#0b77ff;color:white">📋 Copy Address</button>
+  </section>
+
+  <section class="card" id="nft-section">
+    <h3>🎨 NFT</h3>
+    <input id="nftRecipient" placeholder="Recipient address" />
+    <input id="nftId" placeholder="NFT ID" />
+    <button style="margin-top:auto;background:#8a56ff;color:#fff" onclick="doSendNft()">Send NFT</button>
+  </section>
+
+  <section class="card" style="grid-column:span 3">
+    <h3>📜 Transaction History</h3>
+    <div id="txLog" class="txlog">No transactions yet.</div>
+  </section>
+</main>
+
+<footer class="footer">
+  Made by @rar0272 · Powered by Anoma · Demo · Not a real wallet
+</footer>
+
+<script>
+function el(id){return document.getElementById(id);}
+function val(id){const e=el(id); return e?e.value:'';}
+
+const TOKENS=["ETH","BTC","USDT","USDC","XAN","SUI","POL","SOL","AVX","BNB","BASE","ARB"];
+function populateAll(){document.querySelectorAll('select').forEach(s=>{s.innerHTML='<option value="">--</option>';TOKENS.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;s.appendChild(o);});});}
+populateAll();
+
+function log(msg){const tx=el('txLog');if(!tx)return;if(tx.innerText.trim()==='No transactions yet.')tx.innerText='';tx.innerText=(new Date().toLocaleTimeString())+' — '+msg+'\n'+tx.innerText;}
+
+function connectWallet(){const btn=el('connectBtn');btn.innerText='✅ Connected';btn.disabled=true;btn.style.background='#28a745';log('Wallet connected');}
+function doSwap(){const f=val('swapFrom'),t=val('swapTo'),a=val('swapAmt');if(!f||!t||!a){alert('Select tokens and enter amount');return;}if(f===t){alert('Choose different tokens');return;}const msg=`Swapped ${a} ${f} → ${t}`;alert(msg);log(msg);}
+function doBridge(){const f=val('bridgeFrom'),t=val('bridgeTo'),a=val('bridgeAmt');if(!f||!t||!a){alert('Select tokens and enter amount');return;}if(f===t){alert('Choose different tokens');return;}const msg=`Bridged ${a} ${f} → ${t}`;alert(msg);log(msg);}
+function doSend(){const tk=val('sendToken'),r=val('sendTo'),a=val('sendAmt');if(!tk||!r||!a){alert('Fill token, recipient and amount');return;}const msg=`Sent ${a} ${tk} → ${r}`;alert(msg);log(msg);}
+function copyAddress(){const addr=el('recvAddr').innerText;if(!addr||addr==='No token selected'){alert('No address');return;}navigator.clipboard.writeText(addr).then(()=>{alert('Copied: '+addr);log('Copied receive address: '+addr);});}
+function doSendNft(){const r=val('nftRecipient'),id=val('nftId');if(!r||!id){alert('Enter recipient and NFT ID');return;}const msg=`Sent NFT #${id} → ${r}`;alert(msg);log(msg);}
+el('recvToken').addEventListener('change',function(){const tk=this.value;el('recvAddr').innerText=tk?('0x'+tk+'DemoAddress'):'No token selected';});
+</script>
+</body>
+</html>
